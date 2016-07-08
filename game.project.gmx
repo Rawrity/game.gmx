@@ -33,6 +33,7 @@
     <script>scripts\wtile_begin.gml</script>
     <script>scripts\wtile_end.gml</script>
     <script>scripts\wtile_add.gml</script>
+    <script>scripts\wtile_add_all.gml</script>
   </scripts>
   <fonts name="fonts">
     <font>fonts\Font</font>

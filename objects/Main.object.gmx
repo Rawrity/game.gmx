@@ -55,22 +55,12 @@ player_y = room_height/2;
 Tiles = wtile_init();
 var surface = wtile_begin();
 
-wtile_add(Tiles, surface, "floor");
-wtile_add(Tiles, surface, "player");
-wtile_add(Tiles, surface, "number 3");
-wtile_add(Tiles, surface, "number 4");
+wtile_add(Tiles, surface, false, "floor", "this is the floor");
 
-// just load the rest
-var index = ds_list_size(Tiles);
-var width = surface_get_width(surface);
-var height = surface_get_height(surface);
-
-for (var i = index; i &lt; (width*height) / (16*16); ++i)
-{
-    wtile_add(Tiles, surface, "Tile " + string(i));
-}
+wtile_add_all(Tiles, surface);
 
 wtile_end(surface);
+
 </string>
           </argument>
         </arguments>
@@ -123,11 +113,25 @@ for (var i = 0; i &lt; 45; ++i)
         <arguments>
           <argument>
             <kind>1</kind>
-            <string>if (mouse_check_button(mb_left))
+            <string>if (mouse_check_button_pressed(mb_middle))
 {
     var mouse_xx = floor(mouse_x/16);
     var mouse_yy = floor(mouse_y/16);
     ds_grid_set(World, mouse_xx, mouse_yy, irandom(ds_list_size(Tiles)-1));//(ds_grid_get(World, mouse_xx, mouse_yy)+1) % ds_list_size(Tiles));
+}
+
+if (mouse_check_button_pressed(mb_left))
+{
+    var mouse_xx = floor(mouse_x/16);
+    var mouse_yy = floor(mouse_y/16);
+    ds_grid_set(World, mouse_xx, mouse_yy, (ds_grid_get(World, mouse_xx, mouse_yy)+1) % ds_list_size(Tiles));
+}
+
+if (mouse_check_button_pressed(mb_right))
+{
+    var mouse_xx = floor(mouse_x/16);
+    var mouse_yy = floor(mouse_y/16);
+    ds_grid_set(World, mouse_xx, mouse_yy, abs((ds_grid_get(World, mouse_xx, mouse_yy)-1) % (0-ds_list_size(Tiles))));
 }
 </string>
           </argument>
@@ -186,7 +190,7 @@ draw_text_outlined(room_width-2, 2, "GMS Collab Project", c_white, 1, c_black);
 for (var i = 0; i &lt; ds_list_size(Tiles); ++i)
 {
     draw_sprite(ds_list_find_value(ds_list_find_value(Tiles, i), 1), 0, room_width-16-2, 2+((i+1)*16));
-    draw_text_outlined(room_width-2-16-2, 2+((i+1)*16), ds_list_find_value(ds_list_find_value(Tiles, i), 2), c_white, 1, c_black);
+    draw_text_outlined(room_width-2-16-2, 2+((i+1)*16), ds_list_find_value(ds_list_find_value(Tiles, i), 3), c_white, 1, c_black);
 }
 draw_set_halign(fa_left);
 </string>
@@ -215,7 +219,7 @@ for (var i = 0; i &lt; ds_grid_width(World); ++i)
     for (var j = 0; j &lt; ds_grid_height(World); ++j)
     {
         draw_sprite(ds_list_find_value(ds_list_find_value(Tiles, ds_grid_get(World, i, j)), 1), 0, i*16, j*16);
-        draw_text(i*16, j*16, (ds_list_find_value(ds_list_find_value(Tiles, ds_grid_get(World, i, j)), 0)/ds_list_size(Tiles))*255);
+        //draw_text(i*16, j*16, (ds_list_find_value(ds_list_find_value(Tiles, ds_grid_get(World, i, j)), 0)/ds_list_size(Tiles))*255);
     }
 }
 
