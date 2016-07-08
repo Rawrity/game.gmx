@@ -25,41 +25,110 @@
         <arguments>
           <argument>
             <kind>1</kind>
-            <string>// init
+            <string>///Init
 draw_set_font(Font);
-
-// generate sprites
-Tileset = sprite_add("tileset.png", 1, false, false, 0, 0)
-
-var surface = surface_create(sprite_get_width(Tileset), sprite_get_height(Tileset));
-
-surface_set_target(surface);
-draw_sprite(Tileset, 0, 0, 0);
-surface_reset_target();
-
-// tiles
-Tiles = ds_list_create();
-
-// new tile
-var Tile;
-
-Tile = ds_list_create();
-ds_list_add(Tile, 0); // id
-ds_list_add(Tile, sprite_create_from_surface(surface, 0, 0, 16, 16, false, false, 0, 0)); // sprite
-ds_list_add(Tile, "floor"); // inspection info
-ds_list_add(Tiles, Tile); // add it to the global tile set
-
-Tile = ds_list_create();
-ds_list_add(Tile, 1);
-ds_list_add(Tile, sprite_create_from_surface(surface, 16, 0, 16, 16, true, false, 0, 0));
-ds_list_add(Tile, "player");
-ds_list_add(Tiles, Tile);
-
-surface_free(surface);
 
 // temp player
 player_x = room_width/2;
 player_y = room_height/2;
+</string>
+          </argument>
+        </arguments>
+      </action>
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>///Tiles
+Tiles = wtile_init();
+var surface = wtile_begin();
+
+wtile_add(Tiles, surface, "floor");
+wtile_add(Tiles, surface, "player");
+wtile_add(Tiles, surface, "number 3");
+wtile_add(Tiles, surface, "number 4");
+
+// just load the rest
+var index = ds_list_size(Tiles);
+var width = surface_get_width(surface);
+var height = surface_get_height(surface);
+
+for (var i = index; i &lt; (width*height) / (16*16); ++i)
+{
+    wtile_add(Tiles, surface, "Tile " + string(i));
+}
+
+wtile_end(surface);
+</string>
+          </argument>
+        </arguments>
+      </action>
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>///World
+World = ds_grid_create(45, 45);
+
+for (var i = 0; i &lt; 45; ++i)
+{
+    for (var j = 0; j &lt; 45; ++j)
+    {
+        ds_grid_add(World, i, j, 0);
+    }
+}
+</string>
+          </argument>
+        </arguments>
+      </action>
+    </event>
+    <event eventtype="3" enumb="0">
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>if (mouse_check_button(mb_left))
+{
+    var mouse_xx = floor(mouse_x/16);
+    var mouse_yy = floor(mouse_y/16);
+    ds_grid_set(World, mouse_xx, mouse_yy, irandom(ds_list_size(Tiles)-1));//(ds_grid_get(World, mouse_xx, mouse_yy)+1) % ds_list_size(Tiles));
+}
 </string>
           </argument>
         </arguments>
@@ -83,7 +152,7 @@ player_y = room_height/2;
           <argument>
             <kind>1</kind>
             <string>// tiles
-draw_sprite_tiled(ds_list_find_value(ds_list_find_value(Tiles, 0), 1), 0, 0, 0);
+//draw_sprite_tiled(ds_list_find_value(ds_list_find_value(Tiles, 0), 1), 0, 0, 0);
 
 
 // player
@@ -92,8 +161,63 @@ player_y += (keyboard_check(ord("S"))-keyboard_check(ord("W")))*4;
 
 draw_sprite(ds_list_find_value(ds_list_find_value(Tiles, 1), 1), 0, player_x, player_y);
 
+// GUI
+var gui_xx = room_height*1.4;
+draw_rectangle(gui_xx, 0, room_width, room_height, false);
+
+var default_color = draw_get_color();
+
+for (var i = 0; i &lt; ds_grid_width(World); ++i)
+{
+    for (var j = 0; j &lt; ds_grid_height(World); ++j)
+    {
+        var tile_color = ds_list_find_value(ds_list_find_value(Tiles, ds_grid_get(World, i, j)), 0);
+        draw_set_color(make_colour_hsv((tile_color/ds_list_size(Tiles))*255, 255, 255));
+        draw_rectangle(gui_xx+4+(i*4), 0+4+(j*4), gui_xx+4+(i*4)+4, 0+4+(j*4)+4, false);
+    }
+}
+
+draw_set_color(default_color);
+
 // text
-draw_text_outlined(2, 2, "GMS Collab Project", c_white, 2, c_black);
+draw_set_halign(fa_right);
+draw_text_outlined(room_width-2, 2, "GMS Collab Project", c_white, 1, c_black);
+
+for (var i = 0; i &lt; ds_list_size(Tiles); ++i)
+{
+    draw_sprite(ds_list_find_value(ds_list_find_value(Tiles, i), 1), 0, room_width-16-2, 2+((i+1)*16));
+    draw_text_outlined(room_width-2-16-2, 2+((i+1)*16), ds_list_find_value(ds_list_find_value(Tiles, i), 2), c_white, 1, c_black);
+}
+draw_set_halign(fa_left);
+</string>
+          </argument>
+        </arguments>
+      </action>
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>///World
+for (var i = 0; i &lt; ds_grid_width(World); ++i)
+{
+    for (var j = 0; j &lt; ds_grid_height(World); ++j)
+    {
+        draw_sprite(ds_list_find_value(ds_list_find_value(Tiles, ds_grid_get(World, i, j)), 1), 0, i*16, j*16);
+        draw_text(i*16, j*16, (ds_list_find_value(ds_list_find_value(Tiles, ds_grid_get(World, i, j)), 0)/ds_list_size(Tiles))*255);
+    }
+}
 
 </string>
           </argument>

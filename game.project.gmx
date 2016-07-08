@@ -29,6 +29,10 @@
   <paths name="paths"/>
   <scripts name="scripts">
     <script>scripts\draw_text_outlined.gml</script>
+    <script>scripts\wtile_init.gml</script>
+    <script>scripts\wtile_begin.gml</script>
+    <script>scripts\wtile_end.gml</script>
+    <script>scripts\wtile_add.gml</script>
   </scripts>
   <fonts name="fonts">
     <font>fonts\Font</font>
