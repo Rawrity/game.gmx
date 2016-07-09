@@ -1,4 +1,4 @@
-//draw_text_outlined(x, y, text, text color, outline width, outline color);
+///draw_text_outlined(x, y, text, text color, outline width, outline color);
 
 var original_color = draw_get_color();
 
