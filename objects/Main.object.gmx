@@ -100,11 +100,11 @@ wtile_end(surface);
           <argument>
             <kind>1</kind>
             <string>///World
-World = ds_grid_create(45, 45);
+World = ds_grid_create(64, 64);
 
-for (var i = 0; i &lt; 45; ++i)
+for (var i = 0; i &lt; 64; ++i)
 {
-    for (var j = 0; j &lt; 45; ++j)
+    for (var j = 0; j &lt; 64; ++j)
     {
         ds_grid_add(World, i, j, 0);
     }
