@@ -1,5 +1,8 @@
 ///ds_list tileset wtile_init()
 
+wtile_sheet_width = -1;
+wtile_sheet_height = -1;
+
 return ds_list_create();
 
 // constants

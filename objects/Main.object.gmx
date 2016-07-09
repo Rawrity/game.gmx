@@ -28,9 +28,26 @@
             <string>///Init
 draw_set_font(Font);
 
+// states
+STATE_NONE = 0;
+STATE_MENU = 1;
+STATE_EDIT = 2;
+STATE_PLAY = 3;
+
+STATE = STATE_EDIT;
+
 // temp player
 player_x = room_width/2;
 player_y = room_height/2;
+
+// STATE_EDIT
+edit_mouseover = -1;
+edit_xx = (room_width * 0.775)+16+16;
+edit_yy = 16+(4*64)+16+16;
+edit_selected = -1;
+edit_last_xx = -1;
+edit_last_yy = -1;
+
 </string>
           </argument>
         </arguments>
@@ -55,7 +72,8 @@ player_y = room_height/2;
 Tiles = wtile_init();
 var surface = wtile_begin();
 
-wtile_add(Tiles, surface, false, "floor", "this is the floor");
+wtile_add(Tiles, surface, true, "empty void", "How can it be so impossibly empty?");
+// todo create a wrapper function that adds them to a list that is then iterated and added to the tile table
 
 wtile_add_all(Tiles, surface);
 
@@ -113,26 +131,86 @@ for (var i = 0; i &lt; 45; ++i)
         <arguments>
           <argument>
             <kind>1</kind>
-            <string>if (mouse_check_button_pressed(mb_middle))
+            <string>if (keyboard_check_pressed(ord("Z")))
 {
-    var mouse_xx = floor(mouse_x/16);
-    var mouse_yy = floor(mouse_y/16);
-    ds_grid_set(World, mouse_xx, mouse_yy, irandom(ds_list_size(Tiles)-1));//(ds_grid_get(World, mouse_xx, mouse_yy)+1) % ds_list_size(Tiles));
+    STATE = (STATE+1) % 4;
 }
 
-if (mouse_check_button_pressed(mb_left))
+// player
+player_x += (keyboard_check(ord("D"))-keyboard_check(ord("A")))*4;
+player_y += (keyboard_check(ord("S"))-keyboard_check(ord("W")))*4;
+
+</string>
+          </argument>
+        </arguments>
+      </action>
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>///STATE_EDIT
+if (STATE != STATE_EDIT)
+    exit;
+    
+/* problem: sprite list isn't square, potential holes, so we have to check for them anyway
+if (mouse_x &gt; (room_width * 0.775)+16+16 &amp;&amp;
+    mouse_x &lt; room_width-16-16 &amp;&amp;
+    mouse_y &gt; 16+(4*64)+16+16 &amp;&amp;
+    mouse_y &lt;)
+*/
+
+var mouse_xx = floor(mouse_x/16);
+var mouse_yy = floor(mouse_y/16);
+var tile_xx = mouse_xx - (edit_xx/16);
+var tile_yy = mouse_yy - (edit_yy/16);
+var tile_index = tile_xx + (tile_yy * wtile_sheet_width);
+
+if (tile_index &gt;= 0 &amp;&amp; tile_index &lt; ds_list_size(Tiles) &amp;&amp; tile_xx &gt;= 0 &amp;&amp; tile_yy &gt;= 0)
 {
-    var mouse_xx = floor(mouse_x/16);
-    var mouse_yy = floor(mouse_y/16);
-    ds_grid_set(World, mouse_xx, mouse_yy, (ds_grid_get(World, mouse_xx, mouse_yy)+1) % ds_list_size(Tiles));
+    edit_mouseover = tile_index;
+    
+    if (mouse_check_button_pressed(mb_left))
+    {
+        edit_selected = tile_index;
+    }
+}
+else
+{
+    edit_mouseover = -1;
 }
 
-if (mouse_check_button_pressed(mb_right))
+if (edit_selected &gt; -1 &amp;&amp; mouse_xx &gt;= 0 &amp;&amp; mouse_yy &gt;= 0 &amp;&amp; mouse_xx &lt; ds_grid_width(World) &amp;&amp; mouse_yy &lt; ds_grid_height(World))
 {
-    var mouse_xx = floor(mouse_x/16);
-    var mouse_yy = floor(mouse_y/16);
-    ds_grid_set(World, mouse_xx, mouse_yy, abs((ds_grid_get(World, mouse_xx, mouse_yy)-1) % (0-ds_list_size(Tiles))));
+    if (mouse_check_button(mb_left) &amp;&amp; tile_xx != edit_last_xx &amp;&amp; tile_yy != edit_last_yy)
+    {
+        ds_grid_set(World, mouse_xx, mouse_yy, edit_selected);//(ds_grid_get(World, mouse_xx, mouse_yy)+1) % ds_list_size(Tiles));
+        edit_last_xx = mouse_xx;
+        edit_last_yy = mouse_yy;
+    }
+    else if (mouse_check_button(mb_right) &amp;&amp; ((tile_xx != edit_last_xx &amp;&amp; tile_yy != edit_last_yy) || ds_grid_get(World, mouse_xx, mouse_yy) != 0))
+    {
+        ds_grid_set(World, mouse_xx, mouse_yy, 0);
+        edit_last_xx = mouse_xx;
+        edit_last_yy = mouse_yy;
+    }
+    if (mouse_check_button(mb_middle))
+    {
+        ds_grid_set(World, mouse_xx, mouse_yy, irandom(ds_list_size(Tiles)-1));
+    }
 }
+
 </string>
           </argument>
         </arguments>
@@ -155,44 +233,47 @@ if (mouse_check_button_pressed(mb_right))
         <arguments>
           <argument>
             <kind>1</kind>
-            <string>// tiles
-//draw_sprite_tiled(ds_list_find_value(ds_list_find_value(Tiles, 0), 1), 0, 0, 0);
+            <string>///GUI
 
-
-// player
-player_x += (keyboard_check(ord("D"))-keyboard_check(ord("A")))*4;
-player_y += (keyboard_check(ord("S"))-keyboard_check(ord("W")))*4;
-
-draw_sprite(ds_list_find_value(ds_list_find_value(Tiles, 1), 1), 0, player_x, player_y);
-
-// GUI
-var gui_xx = room_height*1.4;
+var gui_xx = room_width * 0.775; // its 992, 288 left over
 draw_rectangle(gui_xx, 0, room_width, room_height, false);
 
+// Minimap
 var default_color = draw_get_color();
+var tile_color = 0;
 
-for (var i = 0; i &lt; ds_grid_width(World); ++i)
+for (var i = 0; i &lt; 64; ++i)
 {
-    for (var j = 0; j &lt; ds_grid_height(World); ++j)
+    for (var j = 0; j &lt; 64; ++j)
     {
-        var tile_color = ds_list_find_value(ds_list_find_value(Tiles, ds_grid_get(World, i, j)), 0);
+        if (i &lt; ds_grid_width(World) &amp;&amp; j &lt; ds_grid_height(World))
+        {
+            tile_color = ds_list_find_value(ds_list_find_value(Tiles, ds_grid_get(World, i, j)), 0);
+        }
         draw_set_color(make_colour_hsv((tile_color/ds_list_size(Tiles))*255, 255, 255));
-        draw_rectangle(gui_xx+4+(i*4), 0+4+(j*4), gui_xx+4+(i*4)+4, 0+4+(j*4)+4, false);
+        draw_rectangle(gui_xx+16+(i*4), 0+16+(j*4), gui_xx+16+(i*4)+4, 0+16+(j*4)+4, false);
     }
 }
-
 draw_set_color(default_color);
 
-// text
-draw_set_halign(fa_right);
-draw_text_outlined(room_width-2, 2, "GMS Collab Project", c_white, 1, c_black);
+// player (temp)
+draw_sprite(ds_list_find_value(ds_list_find_value(Tiles, 1), 1), 0, player_x, player_y);
 
-for (var i = 0; i &lt; ds_list_size(Tiles); ++i)
-{
-    draw_sprite(ds_list_find_value(ds_list_find_value(Tiles, i), 1), 0, room_width-16-2, 2+((i+1)*16));
-    draw_text_outlined(room_width-2-16-2, 2+((i+1)*16), ds_list_find_value(ds_list_find_value(Tiles, i), 3), c_white, 1, c_black);
-}
+// text
+text_xx = room_width-16-16;// right-aligned inset 2 blocks for border and whitespace
+text_yy = 16+(4*64)+16+16 // from top, border, minimap (4 pixels x 64 tiles), border, whitespace
+
+draw_text_outlined(gui_xx+2, 2, "GMS Collab Project", c_white, 1, c_black);
+draw_set_halign(fa_right);
+draw_text_outlined(room_width-2, 2, "State: " + string(state_get(STATE)), c_white, 1, c_black);
 draw_set_halign(fa_left);
+//for (var i = 0; i &lt; ds_list_size(Tiles); ++i)
+//{
+    // account for sprite size
+//    draw_sprite(ds_list_find_value(ds_list_find_value(Tiles, i), 1), 0, text_xx-16, text_yy+((i+1)*16));
+//    draw_text_outlined(text_xx-16, text_yy+((i+1)*16), ds_list_find_value(ds_list_find_value(Tiles, i), 3), c_white, 1, c_black);
+//}
+//draw_set_halign(fa_left);
 </string>
           </argument>
         </arguments>
@@ -219,8 +300,46 @@ for (var i = 0; i &lt; ds_grid_width(World); ++i)
     for (var j = 0; j &lt; ds_grid_height(World); ++j)
     {
         draw_sprite(ds_list_find_value(ds_list_find_value(Tiles, ds_grid_get(World, i, j)), 1), 0, i*16, j*16);
-        //draw_text(i*16, j*16, (ds_list_find_value(ds_list_find_value(Tiles, ds_grid_get(World, i, j)), 0)/ds_list_size(Tiles))*255);
     }
+}
+
+</string>
+          </argument>
+        </arguments>
+      </action>
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>///STATE_EDIT
+if (STATE != STATE_EDIT)
+    exit;
+
+draw_text_outlined(edit_xx-16, edit_yy-16, string(ds_list_size(Tiles)), c_white, 1, c_black);
+
+if (edit_mouseover != -1 || edit_selected != -1)
+{
+    var tile_index = max(edit_mouseover, edit_selected);
+    draw_text_outlined(edit_xx, edit_yy-16, ds_list_find_value(ds_list_find_value(Tiles, tile_index), 3), c_white, 1, c_black);
+}
+
+for (var i = 0; i &lt; ds_list_size(Tiles); ++i)
+{
+    var offset_xx = (i % wtile_sheet_width)*16;
+    var offset_yy = floor(i / wtile_sheet_width)*16;
+    draw_sprite(ds_list_find_value(ds_list_find_value(Tiles, i), 1), 0, edit_xx+offset_xx, edit_yy+offset_yy);
 }
 
 </string>
