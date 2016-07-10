@@ -400,7 +400,7 @@ for (var i = 0; i &lt; 64; ++i)
         {
             tile_color = ds_list_find_value(ds_list_find_value(Tiles, ds_grid_get(World, i, j)), 0);
         }
-        draw_set_color(make_colour_hsv((tile_color/ds_list_size(Tiles))*255, 255, 255));
+        draw_set_color(make_color_hsv((tile_color/ds_list_size(Tiles))*255, 255, 255));
         draw_rectangle(gui_xx+16+(i*4), 0+16+(j*4), gui_xx+16+(i*4)+4, 0+16+(j*4)+4, false);
     }
 }
