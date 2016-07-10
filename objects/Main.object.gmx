@@ -132,10 +132,10 @@ World = ds_grid_create(64, 64);
             <kind>1</kind>
             <string>///VIEWPORT
 // Game World is limited to being drawn within these bounds.
-Viewport[0, 0] = 0;
-Viewport[0, 1] = 0;
-Viewport[1, 0] = 992;
-Viewport[1, 1] = 720;
+Viewport[0, 0] = 0+128;
+Viewport[0, 1] = 0+128;
+Viewport[1, 0] = 992-128;
+Viewport[1, 1] = 720-128;
 // Viewport render is offset by
 Viewoffset[0] = 0;
 Viewoffset[1] = 0;
@@ -150,6 +150,32 @@ Viewpoint[1] = 0;
 Viewanchored = false;
 Viewanchor[0] = 0;
 Viewanchor[1] = 0;
+
+</string>
+          </argument>
+        </arguments>
+      </action>
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>///LIGHTING
+Light = ds_grid_create(64, 64);
+ds_grid_clear(Light, 0.5);
+
+LightSources = ds_list_create();
 
 </string>
           </argument>
@@ -334,11 +360,15 @@ else
     edit_mouseover = -1;
 }
 
-if (world_mouse_x &gt;= max(ceil((Viewport[0,0]/16)+(Viewpoint[0]/16)), 0) &amp;&amp;
-    world_mouse_y &gt;= max(ceil((Viewport[0,1]/16)+(Viewpoint[1]/16)), 0) &amp;&amp;
-    world_mouse_x &lt; min(floor((Viewport[1, 0]/16)+(Viewpoint[0]/16)), tile_xmax) &amp;&amp;
-    world_mouse_y &lt; min(floor((Viewport[1, 1]/16)+(Viewpoint[1]/16)), tile_ymax))
+if (world_mouse_x &gt;= max(floor((Viewport[0,0]/16)+(Viewpoint[0]/16)), 0) &amp;&amp;
+    world_mouse_y &gt;= max(floor((Viewport[0,1]/16)+(Viewpoint[1]/16)), 0) &amp;&amp;
+    world_mouse_x &lt; min(ceil((Viewport[1, 0]/16)+(Viewpoint[0]/16)), tile_xmax) &amp;&amp;
+    world_mouse_y &lt; min(ceil((Viewport[1, 1]/16)+(Viewpoint[1]/16)), tile_ymax))
 {
+    if (keyboard_check(ord("B")))
+    {
+        ds_grid_set_disk(World, world_mouse_x, world_mouse_y, 4, edit_selected);
+    }
     // in world space
     if (mouse_check_button(mb_middle))
     {
@@ -354,6 +384,7 @@ if (world_mouse_x &gt;= max(ceil((Viewport[0,0]/16)+(Viewpoint[0]/16)), 0) &amp;
         }
         else if (mouse_check_button(mb_right))
         {
+            ds_grid_set_disk(Light, world_mouse_x, world_mouse_y, 2, 1);
             edit_selected = ds_grid_get(World, world_mouse_x, world_mouse_y);
             edit_last_xx = world_mouse_x;
             edit_last_yy = world_mouse_y;
@@ -445,13 +476,16 @@ draw_set_halign(fa_left);
           <argument>
             <kind>1</kind>
             <string>///WORLD
-for (var i = max(ceil((Viewport[0,0]/16)+(Viewpoint[0]/16)), 0); i &lt; min(floor((Viewport[1, 0]/16)+(Viewpoint[0]/16)), ds_grid_width(World))/*ds_grid_width(World)*/; ++i)
+var original_alpha = draw_get_alpha()
+for (var i = max(floor((Viewport[0,0]/16)+(Viewpoint[0]/16)), 0); i &lt; min(ceil((Viewport[1, 0]/16)+(Viewpoint[0]/16)), ds_grid_width(World))/*ds_grid_width(World)*/; ++i)
 {
-    for (var j = max(ceil((Viewport[0,1]/16)+(Viewpoint[1]/16)), 0); j &lt; min(floor((Viewport[1, 1]/16)+(Viewpoint[1]/16)), ds_grid_height(World))/*ds_grid_height(World)*/; ++j)
+    for (var j = max(floor((Viewport[0,1]/16)+(Viewpoint[1]/16)), 0); j &lt; min(ceil((Viewport[1, 1]/16)+(Viewpoint[1]/16)), ds_grid_height(World))/*ds_grid_height(World)*/; ++j)
     {
+        draw_set_alpha(ds_grid_get(Light, i, j));
         draw_sprite(ds_list_find_value(ds_list_find_value(Tiles, ds_grid_get(World, i, j)), 1), 0, Viewoffset[0]-Viewpoint[0]+(i*16), Viewoffset[1]-Viewpoint[1]+(j*16));
     }
 }
+draw_set_alpha(original_alpha);
 
 </string>
           </argument>
@@ -532,21 +566,18 @@ for (var i = 0; i &lt; ds_list_size(Tiles); ++i)
           <argument>
             <kind>1</kind>
             <string>///DEBUG
+var original_color = draw_get_color();
+
+draw_set_color(c_red);
 
 if (Viewanchored)
 {
-    var original_color = draw_get_color();
-    draw_set_color(c_white);
     draw_text(mouse_x, mouse_y-12, string(Viewpoint[0]) + ", " + string(Viewpoint[1]) + " (" + string(Viewanchor[0]) + ", " + string(Viewanchor[1]) + ")");
-    draw_set_color(original_color);
 }
 
 if (Viewportanchored)
 {
-    var original_color = draw_get_color();
-    draw_set_color(c_white);
     draw_text(mouse_x, mouse_y-12, string(Viewoffset[0]) + ", " + string(Viewoffset[1]) + " (" + string(Viewportanchor[0]) + ", " + string(Viewportanchor[1]) + ")");
-    draw_set_color(original_color);
 }
 
 var draw_x1 = Viewoffset[0]+Viewport[0, 0];
@@ -558,9 +589,13 @@ draw_rectangle(draw_x1, draw_y1, draw_x2, draw_y2, true);
 draw_text(draw_x1, draw_y1-12, string(Viewport[0, 0]) + ", " + string(Viewport[0, 1]) + " (" + string(Viewoffset[0]) + ", " + string(Viewoffset[1]) + ")");
 //draw_text(Viewoffset[0] - min(floor((Viewport[0,0] + Viewpoint[0])/16)*16, 16), Viewoffset[1] -  min(floor((Viewport[0,1] + Viewpoint[1])/16)*16, -16)-32, string(max(ceil((Viewport[0,0]/16)+(Viewpoint[0]/16)), 0)) + ", 0");
 draw_set_halign(fa_right);
-draw_text(draw_x2, draw_y2, string(Viewport[1, 0]) + ", " + string(Viewport[1, 1]));
+draw_text(draw_x2, draw_y2+2, string(Viewport[1, 0]) + ", " + string(Viewport[1, 1]));
 //draw_text(Viewoffset[0]-Viewpoint[0]+(ds_grid_width(World)*16), Viewoffset[1]-Viewpoint[1]+(ds_grid_height(World)*16), string(ds_grid_width(World)) + ", " + string(ds_grid_height(World)));
 draw_set_halign(fa_left);
+
+bresenham_line(16, 16, mouse_x, mouse_y);
+
+draw_set_color(original_color)
 
 </string>
           </argument>

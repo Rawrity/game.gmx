@@ -35,6 +35,13 @@
     <script>scripts\wtile_add.gml</script>
     <script>scripts\wtile_add_all.gml</script>
     <script>scripts\state_get.gml</script>
+    <script>scripts\bresenham_line.gml</script>
+    <script>scripts\bresenham_octant_x.gml</script>
+    <script>scripts\ternary.gml</script>
+    <scripts name="Light">
+      <script>scripts\wlight_refresh_all.gml</script>
+      <script>scripts\wlight_add.gml</script>
+    </scripts>
   </scripts>
   <fonts name="fonts">
     <font>fonts\Font</font>
