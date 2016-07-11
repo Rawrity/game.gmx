@@ -42,6 +42,13 @@
       <script>scripts\wlight_refresh_all.gml</script>
       <script>scripts\wlight_add.gml</script>
     </scripts>
+    <script>scripts\winit.gml</script>
+    <script>scripts\wplayer_init.gml</script>
+    <script>scripts\wplayer_step.gml</script>
+    <script>scripts\wlight_is_in_shadow.gml</script>
+    <script>scripts\wlight_project_tile.gml</script>
+    <script>scripts\wlight_add_projection.gml</script>
+    <script>scripts\wlight_is_full_shadow.gml</script>
   </scripts>
   <fonts name="fonts">
     <font>fonts\Font</font>

@@ -28,6 +28,8 @@
             <string>///Init
 draw_set_font(Font);
 
+Debug = false;
+
 // states
 STATE_NONE = 0;
 STATE_MENU = 1;
@@ -35,10 +37,6 @@ STATE_EDIT = 2;
 STATE_PLAY = 3;
 
 STATE = STATE_EDIT;
-
-// temp player
-player_x = room_width/2;
-player_y = room_height/2;
 
 // STATE_EDIT
 edit_mouseover = -1;
@@ -72,7 +70,7 @@ edit_last_yy = -1;
 Tiles = wtile_init();
 var surface = wtile_begin();
 
-wtile_add(Tiles, surface, true, "empty void", "How can it be so impossibly empty?");
+wtile_add(Tiles, surface, true, "Player?", "How can it be so impossibly empty?");
 // todo create a wrapper function that adds them to a list that is then iterated and added to the tile table
 
 wtile_add_all(Tiles, surface);
@@ -132,24 +130,30 @@ World = ds_grid_create(64, 64);
             <kind>1</kind>
             <string>///VIEWPORT
 // Game World is limited to being drawn within these bounds.
-Viewport[0, 0] = 0+128;
-Viewport[0, 1] = 0+128;
-Viewport[1, 0] = 992-128;
-Viewport[1, 1] = 720-128;
-// Viewport render is offset by
-Viewoffset[0] = 0;
-Viewoffset[1] = 0;
-//  current offset point (temp)
-Viewportanchored = false;
-Viewportanchor[0] = 0;
-Viewportanchor[1] = 0;
-// Centered on this point
-Viewpoint[0] = 0;
-Viewpoint[1] = 0;
-// Current view point (temp)
-Viewanchored = false;
-Viewanchor[0] = 0;
-Viewanchor[1] = 0;
+Worldport[0, 0] = 0;
+Worldport[0, 1] = 0;
+Worldport[1, 0] = 992;
+Worldport[1, 1] = 720;
+Worldportanchored = false;
+Worldportanchor[0, 0] = 0;
+Worldportanchor[0, 1] = 0;
+Worldportanchor[1, 0] = 0;
+Worldportanchor[1, 1] = 0;
+// Internal view
+Worldview[0] = 0;//Worldview[0] = (ds_grid_width(World)*8)-(992/2)//floor((992/16)/2)*16;
+Worldview[1] = 0;//Worldview[1] = (ds_grid_height(World)*8)-(720/2)//floor((720/16)/2)*16;
+Worldviewanchored = false;
+Worldviewanchor[0] = 0;
+Worldviewanchor[1] = 0;
+// Viewport position (WHY???)
+Worldposition[0] = 0;
+Worldposition[1] = 0;
+Worldpositionanchored = false;
+Worldpositionanchor[0] = 0;
+Worldpositionanchor[1] = 0;
+
+//
+Pullview = false;
 
 </string>
           </argument>
@@ -173,10 +177,38 @@ Viewanchor[1] = 0;
             <kind>1</kind>
             <string>///LIGHTING
 Light = ds_grid_create(64, 64);
-ds_grid_clear(Light, 0.5);
+ds_grid_clear(Light, 1);
 
-LightSources = ds_list_create();
+//LightSources = ds_list_create();
 
+</string>
+          </argument>
+        </arguments>
+      </action>
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>///OBJECTS
+//Objects = ds_list_create()
+
+//object = ds_list_create();
+
+//ds_list_add(Objects, 0);  // id, x, y
+
+//ds_grid_add(World, object);
 </string>
           </argument>
         </arguments>
@@ -199,9 +231,25 @@ LightSources = ds_list_create();
         <arguments>
           <argument>
             <kind>1</kind>
-            <string>if (keyboard_check_pressed(ord("C")))
+            <string>if (keyboard_check_pressed(ord("R")))
+{
+    wlight_refresh(24, 24, 24);
+}
+
+//if (keyboard_key != keyboard_lastkey)
+//{
+//    show_debug_message(keyboard_lastkey);
+//}
+
+if (keyboard_check_pressed(192)) //~
+{
+    Debug = !Debug;
+}
+
+if (keyboard_check_pressed(ord("C")))
 {
     ds_grid_clear(World, 0);
+    //ds_grid_clear(Light, 0.5);
 }
 
 if (keyboard_check_pressed(ord("L")))
@@ -238,73 +286,21 @@ if (keyboard_check_pressed(ord("Z")))
     STATE = (STATE+1) % 4;
 }
 
-if (keyboard_check(ord("1")))
+if (keyboard_check(vk_space))
 {
-    Viewport[0, 0] = clamp(mouse_x-Viewoffset[0], 0, Viewport[1, 0]);
-    Viewport[0, 1] = clamp(mouse_y-Viewoffset[1], 0, Viewport[1, 1]);
-}
-//else
-if (keyboard_check(ord("2")))
-{
-    Viewport[1, 0] = clamp(mouse_x-Viewoffset[0], Viewport[0, 0], ds_grid_width(World)*16);
-    Viewport[1, 1] = clamp(mouse_y-Viewoffset[1], Viewport[0, 1], ds_grid_height(World)*16);
-}
-if (keyboard_check(ord("3")))
-{
-    if (!Viewportanchored)
+    if (!Worldviewanchored)
     {
-        Viewportanchor[0] = Viewoffset[0]-mouse_x;
-        Viewportanchor[1] = Viewoffset[1]-mouse_y;
-        Viewportanchored = true;
+        Worldviewanchor[0] = Worldview[0]+mouse_x;
+        Worldviewanchor[1] = Worldview[1]+mouse_y;
+        Worldviewanchored = true;
     }
-    Viewoffset[0] = Viewportanchor[0]+mouse_x;
-    Viewoffset[1] = Viewportanchor[1]+mouse_y;
+    Worldview[0] = Worldviewanchor[0]-mouse_x;
+    Worldview[1] = Worldviewanchor[1]-mouse_y;
 }
 else
 {
-    Viewportanchored = false;
+    Worldviewanchored = false;
 }
-if (keyboard_check(ord("4")))
-{
-    if (!Viewanchored)
-    {
-        Viewanchor[0] = Viewpoint[0]+mouse_x;
-        Viewanchor[1] = Viewpoint[1]+mouse_y;
-        Viewanchored = true;
-    }
-    Viewpoint[0] = Viewanchor[0]-mouse_x;
-    Viewpoint[1] = Viewanchor[1]-mouse_y;
-}
-else
-{
-    Viewanchored = false;
-}
-if (keyboard_check_pressed(ord("5")))
-{
-    Viewport[0, 0] = 0;
-    Viewport[0, 1] = 0;
-    Viewport[1, 0] = 992;
-    Viewport[1, 1] = 720;
-    
-    Viewoffset[0] = 0;
-    Viewoffset[1] = 0;
-    
-    Viewportanchored = false;
-    Viewportanchor[0] = 0;
-    Viewportanchor[1] = 0;
-    
-    Viewpoint[0] = 0;
-    Viewpoint[1] = 0;
-    
-    Viewanchored = false;
-    Viewanchor[0] = 0;
-    Viewanchor[1] = 0;
-}
-
-// player
-player_x += (keyboard_check(ord("D"))-keyboard_check(ord("A")))*4;
-player_y += (keyboard_check(ord("S"))-keyboard_check(ord("W")))*4;
-
 </string>
           </argument>
         </arguments>
@@ -343,8 +339,8 @@ var tile_yy = mouse_yy - (edit_yy/16);
 var tile_index = tile_xx + (tile_yy * wtile_sheet_width);
 var tile_xmax = ds_grid_height(World);
 var tile_ymax = ds_grid_width(World)
-var world_mouse_x = floor(mouse_x + Viewpoint[0] - Viewoffset[0])/16;
-var world_mouse_y = floor(mouse_y + Viewpoint[1] - Viewoffset[1])/16;
+var world_mouse_x = floor(mouse_x + Worldview[0] - Worldposition[0])/16;
+var world_mouse_y = floor(mouse_y + Worldview[1] - Worldposition[1])/16;
 
 if (tile_index &gt;= 0 &amp;&amp; tile_index &lt; ds_list_size(Tiles) &amp;&amp; tile_xx &gt;= 0 &amp;&amp; tile_yy &gt;= 0)
 {
@@ -360,10 +356,10 @@ else
     edit_mouseover = -1;
 }
 
-if (world_mouse_x &gt;= max(floor((Viewport[0,0]/16)+(Viewpoint[0]/16)), 0) &amp;&amp;
-    world_mouse_y &gt;= max(floor((Viewport[0,1]/16)+(Viewpoint[1]/16)), 0) &amp;&amp;
-    world_mouse_x &lt; min(ceil((Viewport[1, 0]/16)+(Viewpoint[0]/16)), tile_xmax) &amp;&amp;
-    world_mouse_y &lt; min(ceil((Viewport[1, 1]/16)+(Viewpoint[1]/16)), tile_ymax))
+if (world_mouse_x &gt;= max(floor((Worldport[0, 0]/16)+(Worldview[0]/16)), 0) &amp;&amp;
+    world_mouse_y &gt;= max(floor((Worldport[0, 1]/16)+(Worldview[1]/16)), 0) &amp;&amp;
+    world_mouse_x &lt; min(ceil((Worldport[1, 0]/16)+(Worldview[0]/16)), tile_xmax) &amp;&amp;
+    world_mouse_y &lt; min(ceil((Worldport[1, 1]/16)+(Worldview[1]/16)), tile_ymax))
 {
     if (keyboard_check(ord("B")))
     {
@@ -396,8 +392,199 @@ if (world_mouse_x &gt;= max(floor((Viewport[0,0]/16)+(Viewpoint[0]/16)), 0) &amp
           </argument>
         </arguments>
       </action>
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>///DEBUG
+
+if (!Debug)
+    exit;
+
+if (keyboard_check(ord("1")))
+{
+    Worldport[0, 0] = clamp(mouse_x-Worldposition[0], 0, Worldport[1, 0]);
+    Worldport[0, 1] = clamp(mouse_y-Worldposition[1], 0, Worldport[1, 1]);
+    
+    /*if (mouse_x-Worldposition[0]+Worldview[0] &lt; 0 || mouse_y-Worldposition[1]+Worldview[1] &lt; 0 ||
+        mouse_x-Worldposition[0] &lt; 0 || mouse_y-Worldposition[1] &lt; 0)
+    {
+        Pullview = true;
+    }
+    else
+    {
+        Pullview = false;
+    }*/
+}
+/*else
+{
+    Pullview = false;
+}
+//else
+if (Pullview)
+{
+    var mx = min(mouse_x-Worldposition[0]+Worldview[0], 0);
+    var my = min(mouse_y-Worldposition[1]+Worldview[1], 0);
+    show_debug_message(mx);
+    
+    if (!Worldportanchored)
+    {
+        Worldportanchor[0] = Worldview[0]+mouse_x;//Worldposition[0]+Worldport[1, 0]//+mouse_x;
+        Worldportanchor[1] = Worldview[1]+mouse_y;//Worldposition[1]+Worldport[1, 1]//+mouse_y;
+        Worldviewanchor[0] = Worldport[1, 0]-mx;
+        Worldviewanchor[1] = Worldport[1, 1]-my;
+        Worldportanchored = true;
+    }
+    Worldview[0] = Worldportanchor[0]-mouse_x;
+    Worldview[1] = Worldportanchor[1]-mouse_y;
+    //Worldposition[0]
+    Worldport[0, 0] = clamp(mouse_x-Worldposition[0], 0, Worldport[1, 0]);
+    Worldport[0, 1] = clamp(mouse_y-Worldposition[1], 0, Worldport[1, 1]);
+    Worldport[1, 0] = clamp(Worldviewanchor[0]-mx, Worldport[0, 0], ds_grid_width(World)*16);
+    Worldport[1, 1] = clamp(Worldviewanchor[1]-my, Worldport[0, 1], ds_grid_height(World)*16);
+    //Worldposition[0] = Worldportanchor[0]+mouse_x;
+    //Worldposition[1] = Worldportanchor[1]+mouse_y;
+}*/
+
+if (keyboard_check(ord("2")))
+{
+    Worldport[1, 0] = clamp(mouse_x-Worldposition[0], Worldport[0, 0], ds_grid_width(World)*16);
+    Worldport[1, 1] = clamp(mouse_y-Worldposition[1], Worldport[0, 1], ds_grid_height(World)*16);
+}
+
+/*if (keyboard_check(ord("3")))
+{
+    if (!Worldviewanchored)
+    {
+        Worldviewanchor[0] = Worldview[0]+mouse_x;
+        Worldviewanchor[1] = Worldview[1]+mouse_y;
+        Worldviewanchored = true;
+    }
+    Worldview[0] = Worldviewanchor[0]-mouse_x;
+    Worldview[1] = Worldviewanchor[1]-mouse_y;
+}
+else
+{
+    Worldviewanchored = false;
+}*/
+
+if (keyboard_check(ord("4")))
+{
+    if (!Worldpositionanchored)
+    {
+        Worldpositionanchor[0] = Worldposition[0]-mouse_x;
+        Worldpositionanchor[1] = Worldposition[1]-mouse_y;
+        Worldpositionanchored = true;
+    }
+    Worldposition[0] = Worldpositionanchor[0]+mouse_x;
+    Worldposition[1] = Worldpositionanchor[1]+mouse_y;
+}
+else
+{
+    Worldpositionanchored = false;
+}
+
+if (keyboard_check_pressed(ord("5")))
+{
+    // replace with world_init script
+    Worldport[0, 0] = 0;
+    Worldport[0, 1] = 0;
+    Worldport[1, 0] = 992;
+    Worldport[1, 1] = 720;
+    Worldportanchored = false;
+    Worldportanchor[0, 0] = 0;
+    Worldportanchor[0, 1] = 0;
+    Worldportanchor[1, 0] = 0;
+    Worldportanchor[1, 1] = 0;
+    
+    Worldview[0] = 0;
+    Worldview[1] = 0;
+    Worldviewanchored = false;
+    Worldviewanchor[0] = 0;
+    Worldviewanchor[1] = 0;
+    
+    Worldposition[0] = 0;
+    Worldposition[1] = 0;
+    Worldpositionanchored = false;
+    Worldpositionanchor[0] = 0;
+    Worldpositionanchor[1] = 0;
+}
+
+</string>
+          </argument>
+        </arguments>
+      </action>
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>///OBJECTS
+if (keyboard_check_pressed(vk_up))
+{
+//    ds_list
+}
+</string>
+          </argument>
+        </arguments>
+      </action>
     </event>
     <event eventtype="8" enumb="0">
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>///WORLD todo: vertex buffer
+var original_alpha = draw_get_alpha()
+for (var i = max(floor((Worldport[0,0]/16)+(Worldview[0]/16)), 0); i &lt; min(ceil((Worldport[1, 0]/16)+(Worldview[0]/16)), ds_grid_width(World))/*ds_grid_width(World)*/; ++i)
+{
+    for (var j = max(floor((Worldport[0,1]/16)+(Worldview[1]/16)), 0); j &lt; min(ceil((Worldport[1, 1]/16)+(Worldview[1]/16)), ds_grid_height(World))/*ds_grid_height(World)*/; ++j)
+    {
+        draw_set_alpha(ds_grid_get(Light, i, j));
+        draw_sprite(ds_list_find_value(ds_list_find_value(Tiles, ds_grid_get(World, i, j)), 1), 0, Worldposition[0]-Worldview[0]+(i*16), Worldposition[1]-Worldview[1]+(j*16));
+    }
+}
+draw_set_alpha(original_alpha);
+
+</string>
+          </argument>
+        </arguments>
+      </action>
       <action>
         <libid>1</libid>
         <id>603</id>
@@ -438,16 +625,16 @@ for (var i = 0; i &lt; 64; ++i)
 draw_set_color(default_color);
 
 // player (temp)
-draw_sprite(ds_list_find_value(ds_list_find_value(Tiles, 1), 1), 0, player_x, player_y);
+//draw_sprite(ds_list_find_value(ds_list_find_value(Tiles, 1), 1), 0, player_x, player_y);
 
 // text
 text_xx = room_width-16-16;// right-aligned inset 2 blocks for border and whitespace
 text_yy = 16+(4*64)+16+16 // from top, border, minimap (4 pixels x 64 tiles), border, whitespace
 
-draw_text_outlined(gui_xx+2, 2, "GMS Collab Project - " + string(fps) + " / " + string(room_speed) + " (" + string(delta_time/1000) + ")", c_white, 1, c_black);
-draw_set_halign(fa_right);
-draw_text_outlined(room_width-2, 2, "State: " + string(state_get(STATE)), c_white, 1, c_black);
-draw_set_halign(fa_left);
+//draw_text_outlined(gui_xx+2, 2, "GMS Collab Project - " + string(fps) + " / " + string(room_speed) + " (" + string(delta_time/1000) + ")", c_white, 1, c_black);
+//draw_set_halign(fa_right);
+//draw_text_outlined(room_width-2, 2, "State: " + string(state_get(STATE)), c_white, 1, c_black);
+//draw_set_halign(fa_left);
 //for (var i = 0; i &lt; ds_list_size(Tiles); ++i)
 //{
     // account for sprite size
@@ -475,42 +662,14 @@ draw_set_halign(fa_left);
         <arguments>
           <argument>
             <kind>1</kind>
-            <string>///WORLD
-var original_alpha = draw_get_alpha()
-for (var i = max(floor((Viewport[0,0]/16)+(Viewpoint[0]/16)), 0); i &lt; min(ceil((Viewport[1, 0]/16)+(Viewpoint[0]/16)), ds_grid_width(World))/*ds_grid_width(World)*/; ++i)
-{
-    for (var j = max(floor((Viewport[0,1]/16)+(Viewpoint[1]/16)), 0); j &lt; min(ceil((Viewport[1, 1]/16)+(Viewpoint[1]/16)), ds_grid_height(World))/*ds_grid_height(World)*/; ++j)
-    {
-        draw_set_alpha(ds_grid_get(Light, i, j));
-        draw_sprite(ds_list_find_value(ds_list_find_value(Tiles, ds_grid_get(World, i, j)), 1), 0, Viewoffset[0]-Viewpoint[0]+(i*16), Viewoffset[1]-Viewpoint[1]+(j*16));
-    }
-}
-draw_set_alpha(original_alpha);
-
-</string>
-          </argument>
-        </arguments>
-      </action>
-      <action>
-        <libid>1</libid>
-        <id>603</id>
-        <kind>7</kind>
-        <userelative>0</userelative>
-        <isquestion>0</isquestion>
-        <useapplyto>-1</useapplyto>
-        <exetype>2</exetype>
-        <functionname></functionname>
-        <codestring></codestring>
-        <whoName>self</whoName>
-        <relative>0</relative>
-        <isnot>0</isnot>
-        <arguments>
-          <argument>
-            <kind>1</kind>
             <string>///STATE_EDIT
 if (STATE != STATE_EDIT)
     exit;
-
+  
+/*draw_rectangle(Worldposition[0]-Worldview[0], Worldposition[1]-Worldview[1],
+                Worldposition[0]-Worldview[0]+(ds_grid_width(World)*16),
+                Worldposition[1]-Worldview[1]+(ds_grid_height(World)*16), true);*/
+    
 draw_text_outlined(edit_xx-16, edit_yy-16, string(ds_list_size(Tiles)), c_white, 1, c_black);
 draw_set_valign(fa_bottom);
 draw_text_outlined(edit_xx-16, room_height-16, "
@@ -566,34 +725,114 @@ for (var i = 0; i &lt; ds_list_size(Tiles); ++i)
           <argument>
             <kind>1</kind>
             <string>///DEBUG
+
+
+
+if (!Debug)
+    exit;
+    
 var original_color = draw_get_color();
+    
+draw_set_halign(fa_center);
+draw_set_valign(fa_middle);
+draw_set_color(c_yellow);
+draw_set_alpha(0.5);
+for (var i = 0; i &lt; ds_grid_width(World); ++i)
+{
+    //draw_line(Worldposition[0]-Worldview[0]+(i*16), Worldposition[1]-Worldview[1],
+    //          Worldposition[0]-Worldview[0]+(i*16), Worldposition[1]-Worldview[1]+(ds_grid_height(World)*16));
+              
+    //draw_line(Worldposition[0]-Worldview[0], Worldposition[1]-Worldview[1]+(i*16),
+    //          Worldposition[0]-Worldview[0]+(ds_grid_width(World)*16), Worldposition[1]-Worldview[1]+(i*16));
+
+    for (var j = 0; j &lt; ds_grid_height(World); ++j)
+    {
+        if (i == 0)
+        {
+            //draw_line(Worldposition[0]-Worldview[0], Worldposition[1]-Worldview[1]+(j*16),
+            //          Worldposition[0]-Worldview[0]+(ds_grid_width(World)*16), Worldposition[1]-Worldview[1]+(j*16));
+        }
+        draw_text(9+Worldposition[0]-Worldview[0]+(i*16), 9+Worldposition[1]-Worldview[1]+(j*16), ds_list_find_value(ds_list_find_value(Tiles, ds_grid_get(World, i, j)), 0));
+        
+    }
+}
+draw_set_alpha(1);
+//draw_set_color(original_color);
+draw_set_halign(fa_left);
+draw_set_valign(fa_top);
 
 draw_set_color(c_red);
-
-if (Viewanchored)
+if (Worldviewanchored)
 {
-    draw_text(mouse_x, mouse_y-12, string(Viewpoint[0]) + ", " + string(Viewpoint[1]) + " (" + string(Viewanchor[0]) + ", " + string(Viewanchor[1]) + ")");
+    draw_text(mouse_x, mouse_y-12, string(Worldview[0]) + ", " + string(Worldview[1]) + " (" + string(Worldviewanchor[0]) + ", " + string(Worldviewanchor[1]) + ")");
 }
 
-if (Viewportanchored)
+if (Worldpositionanchored)
 {
-    draw_text(mouse_x, mouse_y-12, string(Viewoffset[0]) + ", " + string(Viewoffset[1]) + " (" + string(Viewportanchor[0]) + ", " + string(Viewportanchor[1]) + ")");
+    draw_text(mouse_x, mouse_y-12, string(Worldposition[0]) + ", " + string(Worldposition[1]) + " (" + string(Worldportanchor[0]) + ", " + string(Worldportanchor[1]) + ")");
 }
 
-var draw_x1 = Viewoffset[0]+Viewport[0, 0];
-var draw_y1 = Viewoffset[1]+Viewport[0, 1];
-var draw_x2 = Viewoffset[0]+Viewport[1, 0];
-var draw_y2 = Viewoffset[1]+Viewport[1, 1];
+var draw_x1 = Worldposition[0]+Worldport[0, 0];
+var draw_y1 = Worldposition[1]+Worldport[0, 1];
+var draw_x2 = Worldposition[0]+Worldport[1, 0];
+var draw_y2 = Worldposition[1]+Worldport[1, 1];
 
 draw_rectangle(draw_x1, draw_y1, draw_x2, draw_y2, true);
-draw_text(draw_x1, draw_y1-12, string(Viewport[0, 0]) + ", " + string(Viewport[0, 1]) + " (" + string(Viewoffset[0]) + ", " + string(Viewoffset[1]) + ")");
-//draw_text(Viewoffset[0] - min(floor((Viewport[0,0] + Viewpoint[0])/16)*16, 16), Viewoffset[1] -  min(floor((Viewport[0,1] + Viewpoint[1])/16)*16, -16)-32, string(max(ceil((Viewport[0,0]/16)+(Viewpoint[0]/16)), 0)) + ", 0");
+draw_rectangle(Worldposition[0], Worldposition[1], Worldposition[0]+(ds_grid_width(World)*16), Worldposition[1]+(ds_grid_height(World)*16), true);
+draw_rectangle(Worldposition[0]+0, Worldposition[1]+0, Worldposition[0]+992, Worldposition[1]+720, true);
+draw_text(draw_x1, draw_y1-12, string(Worldport[0, 0]) + ", " + string(Worldport[0, 1]) + " (" + string(Worldposition[0]) + ", " + string(Worldposition[1]) + ")");
+//draw_text(Worldposition[0] - min(floor((Worldport[0,0] + Worldview[0])/16)*16, 16), Worldposition[1] -  min(floor((Worldport[0,1] + Worldview[1])/16)*16, -16)-32, string(max(ceil((Worldport[0,0]/16)+(Worldview[0]/16)), 0)) + ", 0");
 draw_set_halign(fa_right);
-draw_text(draw_x2, draw_y2+2, string(Viewport[1, 0]) + ", " + string(Viewport[1, 1]));
-//draw_text(Viewoffset[0]-Viewpoint[0]+(ds_grid_width(World)*16), Viewoffset[1]-Viewpoint[1]+(ds_grid_height(World)*16), string(ds_grid_width(World)) + ", " + string(ds_grid_height(World)));
+draw_text(draw_x2, draw_y2+2, string(Worldport[1, 0]) + ", " + string(Worldport[1, 1]));
+//draw_text(Worldposition[0]-Worldview[0]+(ds_grid_width(World)*16), Worldposition[1]-Worldview[1]+(ds_grid_height(World)*16), string(ds_grid_width(World)) + ", " + string(ds_grid_height(World)));
 draw_set_halign(fa_left);
 
-bresenham_line(16, 16, mouse_x, mouse_y);
+//bresenham_line(16, 16, mouse_x, mouse_y);
+
+var debugstring = 
+"GMS Collab Project" + "#" +
+string(fps) + " / " + string(room_speed) + " (" + string(delta_time/1000) + ")" + "#" +
+"State: " + string(state_get(STATE)) +
+"#" +
+"Worldport[0, 0]" + string(Worldport[0, 0]) + "#" +
+"Worldport[0, 1]" + string(Worldport[0, 1]) + "#" +
+"Worldport[1, 0]" + string(Worldport[1, 0]) + "#" +
+"Worldport[1, 1]" + string(Worldport[1, 1]) + "#" +
+"Worldportanchored" + string(Worldportanchored) + "#" +
+"Worldportanchor[0, 0]" + string(Worldportanchor[0, 0]) + "#" +
+"Worldportanchor[0, 1]" + string(Worldportanchor[0, 1]) + "#" +
+"Worldportanchor[1, 0]" + string(Worldportanchor[1, 0]) + "#" +
+"Worldportanchor[1, 1]" + string(Worldportanchor[1, 1]) + "#" +
+"#" +
+"Worldview[0]" + string(Worldview[0]) + "#" +
+"Worldview[1]" + string(Worldview[1]) + "#" +
+"Worldviewanchored" + string(Worldviewanchored) + "#" +
+"Worldviewanchor[0]" + string(Worldviewanchor[0]) + "#" +
+"Worldviewanchor[1]" + string(Worldviewanchor[1]) + "#" +
+"#" +
+"Worldposition[0]" + string(Worldposition[0]) + "#" +
+"Worldposition[1]" + string(Worldposition[1]) + "#" +
+"Worldpositionanchored" + string(Worldpositionanchored) + "#" +
+"Worldpositionanchor[0]" + string(Worldpositionanchor[0]) + "#" +
+"Worldpositionanchor[1]" + string(Worldpositionanchor[1]) + "#" +
+"#" +
+"Pullview" + string(Pullview) + "#" +
+"#" +
+string(clamp(floor((mouse_x + Worldview[0] - Worldposition[0])/16)-1, 0, ds_grid_width(World))) + "#" +
+string(clamp(floor((mouse_y + Worldview[1] - Worldposition[1])/16)-1, 0, ds_grid_height(World))) + "#" +
+string(ds_grid_get(Light,
+clamp(floor((mouse_x + Worldview[0] - Worldposition[0])/16)-1, 0, ds_grid_width(Light)),
+clamp(floor((mouse_y + Worldview[1] - Worldposition[1])/16)-1, 0, ds_grid_height(Light))))
+;
+
+draw_set_color(c_black);
+draw_set_alpha(0.8);
+draw_rectangle(room_width-string_width(debugstring)-4, 0, room_width, string_height(debugstring)+4, false);
+draw_set_alpha(1);
+draw_set_color(c_white);
+draw_set_halign(fa_right);
+draw_text(room_width-2, 2, debugstring);
+draw_set_halign(fa_left);
 
 draw_set_color(original_color)
 
