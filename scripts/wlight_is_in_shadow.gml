@@ -9,8 +9,7 @@ for (var _i = 0; _i < ds_list_size(_shadowline); ++_i)
     
     var _shdw = ds_list_find_value(_shadowline, _i);
     
-    if (!(ds_list_find_value(_shdw, 0) <= ds_list_find_value(_shadow, 0) &&
-        ds_list_find_value(_shdw, 1) >= ds_list_find_value(_shadow, 1)))
+    if (wlight_contains_shadow(_shdw, _shadow))
     {
         return true;
     }

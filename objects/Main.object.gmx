@@ -181,6 +181,7 @@ ds_grid_clear(Light, 1);
 
 //LightSources = ds_list_create();
 
+shadows = ds_list_create();
 </string>
           </argument>
         </arguments>
@@ -213,6 +214,31 @@ ds_grid_clear(Light, 1);
           </argument>
         </arguments>
       </action>
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>///TEMP/TESTING
+col1 = 0;
+row1 = 2;
+col2 = 1;
+row2 = 1;
+</string>
+          </argument>
+        </arguments>
+      </action>
     </event>
     <event eventtype="3" enumb="0">
       <action>
@@ -231,12 +257,42 @@ ds_grid_clear(Light, 1);
         <arguments>
           <argument>
             <kind>1</kind>
-            <string>if (keyboard_check_pressed(ord("R")))
+            <string>///TEMP/TESTING
+
+//if (keyboard_check_pressed(ord("R")))
+//{
+    col1 += (keyboard_check_pressed(ord("Y")) - keyboard_check_pressed(ord("H")))*0.5;
+    row1 += (keyboard_check_pressed(ord("U")) - keyboard_check_pressed(ord("J")))*0.5;
+    col2 += (keyboard_check_pressed(ord("I")) - keyboard_check_pressed(ord("K")))*0.5;
+    row2 += (keyboard_check_pressed(ord("O")) - keyboard_check_pressed(ord("L")))*0.5;
+    
+    //show_debug_message(string(col1) + "/" + string(row1) + " " + string(col2) + "/" + string(row2));
+//}
+if (keyboard_check_pressed(vk_anykey))
 {
     wlight_refresh(24, 24, 24);
 }
-
-//if (keyboard_key != keyboard_lastkey)
+</string>
+          </argument>
+        </arguments>
+      </action>
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>//if (keyboard_key != keyboard_lastkey)
 //{
 //    show_debug_message(keyboard_lastkey);
 //}
@@ -248,10 +304,10 @@ if (keyboard_check_pressed(192)) //~
 
 if (keyboard_check_pressed(ord("C")))
 {
-    ds_grid_clear(World, 0);
+    ds_grid_clear(World, 8);
     //ds_grid_clear(Light, 0.5);
 }
-
+/*
 if (keyboard_check_pressed(ord("L")))
 {
     var data = clipboard_get_text();
@@ -280,7 +336,7 @@ if (keyboard_check_pressed(ord("O")))
     
     clipboard_set_text(data);
 }
-
+*/
 if (keyboard_check_pressed(ord("Z")))
 {
     STATE = (STATE+1) % 4;
@@ -726,6 +782,9 @@ for (var i = 0; i &lt; ds_list_size(Tiles); ++i)
             <kind>1</kind>
             <string>///DEBUG
 
+draw_text_outlined(2, 2, string(col1)+"#"+string(row1)+"#"+string(col2)+"#"+string(row2), c_white, 1, c_black);
+var p = point_direction((24*16)+8, (24*16)+8, mouse_x, mouse_y);
+draw_line((24*16)+8, (24*16)+8, (24*16)+8+lengthdir_x((30*16)+8, p), (24*16)+8+lengthdir_y((30*16)+8, p));
 
 
 if (!Debug)
@@ -752,8 +811,8 @@ for (var i = 0; i &lt; ds_grid_width(World); ++i)
             //draw_line(Worldposition[0]-Worldview[0], Worldposition[1]-Worldview[1]+(j*16),
             //          Worldposition[0]-Worldview[0]+(ds_grid_width(World)*16), Worldposition[1]-Worldview[1]+(j*16));
         }
-        draw_text(9+Worldposition[0]-Worldview[0]+(i*16), 9+Worldposition[1]-Worldview[1]+(j*16), ds_list_find_value(ds_list_find_value(Tiles, ds_grid_get(World, i, j)), 0));
-        
+        //draw_text(9+Worldposition[0]-Worldview[0]+(i*16), 9+Worldposition[1]-Worldview[1]+(j*16), ds_list_find_value(ds_list_find_value(Tiles, ds_grid_get(World, i, j)), 0));
+        draw_text(9+Worldposition[0]-Worldview[0]+(i*16), 9+Worldposition[1]-Worldview[1]+(j*16), ds_grid_get(Light, i, j)*10);
     }
 }
 draw_set_alpha(1);

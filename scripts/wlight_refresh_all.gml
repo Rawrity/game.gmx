@@ -46,43 +46,25 @@ for (var i = 0; i < 8; ++i)
 {
     wlight_refresh_octant(argument0, argument1, i, argument2);
 }
+//ds_grid_set(Light, argument0, argument1, 1)
 
 #define wlight_refresh_octant
-//light_refresh_octant(LightSource light, octant)
-
-/*
-
-get light xy
-
-translates to octant coords
-
-iterate over octant
-
-calculate slopes of solids
-
-add to horizontal shadow line
-
-break once > light range or shadow line complete
-
-[return shadow line]
-
-*/
 ///wlight_refresh_octant(x, y, octant, range)
 var _x = argument0;
 var _y = argument1;
 var _oct = argument2;
 var _range = argument3;
 
-
-//var trashbin = ds_list_create();
-    
-var shadows = ds_list_create();
-var shadow = -1;
-show_debug_message("shadows " + string(shadows));
-
-//ds_list_add(trashbin, shadows);
+for (var si = 0; si < ds_list_size(shadows); ++si)
+{
+    var shadow = ds_list_find_value(shadows, si);
+    ds_list_destroy(shadow);
+    show_debug_message("SCREAMING");
+}
+ds_list_clear(shadows);
 
 var fullshadow = false;
+var shadow = -1;
 
 for (var row = 1; row < _range; ++row)
 {
@@ -90,34 +72,37 @@ for (var row = 1; row < _range; ++row)
     {
         var tx = _x + bresenham_octant_x(row, col, _oct);
         var ty = _y + bresenham_octant_y(row, col, _oct);
-
             
         if (fullshadow)
         {
             ds_grid_set(Light, tx, ty, 0);
-            //show_debug_message("fullshadow");
         }
         else
         {
-            //if (ds_exists(shadow, ds_type_list))
-            //{
-            //    ds_list_destroy(shadow);
-            //}
+            if (ds_exists(shadow, ds_type_list))
+            {
+                //ds_list_destroy(shadow);
+                show_debug_message("existing" + string(shadow));
+            }
             
-            var shadow = wlight_project_tile(row, col);
-            //ds_list_add(trashbin, shadow);
-            //show_debug_message("shadow " + string(shadow));
+            /*var*/shadow = wlight_project_tile(row, col);
+            var str = "";
+            for (var si = 0; si < ds_list_size(shadow); ++si)
+            {
+                str += ", " + string(ds_list_find_value(shadow, si));
+            }
+            //show_debug_message("shadow " + string(shadow) + str);
             var vis = !wlight_is_in_shadow(shadows, shadow);
             
-            ds_grid_set(Light, tx, ty, vis);
+            ds_grid_set(Light, tx, ty, vis);//max(vis  / power(0.94, -row), 0.2));
             
+            // the shadow gets added to the shadows list, and needs to continue existing as it only passes the id
+            // otherwise if it doesn't get added, this shadow can be safely deleted.
             if (vis && ds_grid_get(World, tx, ty) == 1)
             {
                 wlight_add_projection(shadows, shadow);
                 
                 fullshadow = wlight_is_full_shadow(shadows);
-                //ds_list_destroy(shadow);
-                show_debug_message("slammed " + string(shadow));
             }
             else
             {
@@ -127,6 +112,7 @@ for (var row = 1; row < _range; ++row)
         
     }
 }
+
 //ds_list_destroy(shadows);
 //ds_list_destroy(shadow);
 //ds_list_destroy(shadows);
