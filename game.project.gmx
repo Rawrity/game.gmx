@@ -29,27 +29,52 @@
   <paths name="paths"/>
   <scripts name="scripts">
     <script>scripts\draw_text_outlined.gml</script>
-    <script>scripts\wtile_init.gml</script>
-    <script>scripts\wtile_begin.gml</script>
-    <script>scripts\wtile_end.gml</script>
-    <script>scripts\wtile_add.gml</script>
-    <script>scripts\wtile_add_all.gml</script>
+    <script>scripts\winit.gml</script>
+    <scripts name="wtile">
+      <script>scripts\wtile_init.gml</script>
+      <script>scripts\wtile_generate.gml</script>
+      <script>scripts\wtile_begin.gml</script>
+      <script>scripts\wtile_add.gml</script>
+      <script>scripts\wtile_add_all.gml</script>
+      <script>scripts\wtile_end.gml</script>
+    </scripts>
     <script>scripts\state_get.gml</script>
     <script>scripts\bresenham_line.gml</script>
     <script>scripts\bresenham_octant_x.gml</script>
     <script>scripts\ternary.gml</script>
-    <scripts name="Light">
-      <script>scripts\wlight_refresh_all.gml</script>
+    <scripts name="wlight">
+      <script>scripts\wlight_init.gml</script>
+      <script>scripts\wlight_refresh.gml</script>
+      <script>scripts\wlight_refresh_octant.gml</script>
       <script>scripts\wlight_add.gml</script>
+      <script>scripts\wlight_octant_x.gml</script>
+      <script>scripts\wlight_octant_y.gml</script>
+      <script>scripts\wlight_angles_visible.gml</script>
+      <script>scripts\wlight_angles_add.gml</script>
+      <script>scripts\wlight_angles_full.gml</script>
     </scripts>
-    <script>scripts\winit.gml</script>
     <script>scripts\wplayer_init.gml</script>
     <script>scripts\wplayer_step.gml</script>
-    <script>scripts\wlight_is_in_shadow.gml</script>
-    <script>scripts\wlight_project_tile.gml</script>
-    <script>scripts\wlight_add_projection.gml</script>
-    <script>scripts\wlight_is_full_shadow.gml</script>
-    <script>scripts\wlight_contains_shadow.gml</script>
+    <script>scripts\list_add.gml</script>
+    <scripts name="ds_vector">
+      <script>scripts\ds_vector_create.gml</script>
+      <script>scripts\ds_vector_add.gml</script>
+      <script>scripts\ds_vector_get.gml</script>
+      <script>scripts\ds_vector_set.gml</script>
+      <script>scripts\ds_vector_insert.gml</script>
+      <script>scripts\ds_vector_length.gml</script>
+      <script>scripts\ds_vector_size.gml</script>
+      <script>scripts\ds_vector_delete.gml</script>
+      <script>scripts\ds_vector_destroy.gml</script>
+      <script>scripts\ds_vector_clear.gml</script>
+    </scripts>
+    <scripts name="dbg">
+      <script>scripts\dbg_timer_init.gml</script>
+      <script>scripts\dbg_timer_start.gml</script>
+      <script>scripts\dbg_timer_lap.gml</script>
+      <script>scripts\dbg_timer_end.gml</script>
+      <script>scripts\dbg_timer_test.gml</script>
+    </scripts>
   </scripts>
   <fonts name="fonts">
     <font>fonts\Font</font>

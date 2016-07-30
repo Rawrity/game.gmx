@@ -5,7 +5,7 @@ var index = ds_list_size(argument0);
 
 var xx = index % wtile_sheet_width;
 var yy = floor(index / wtile_sheet_width);
-show_debug_message(string(xx) + ", " + string(yy));
+//show_debug_message(string(xx) + ", " + string(yy));
 
 tile = ds_list_create();
 ds_list_add(tile, index); // id
